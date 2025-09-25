@@ -10,7 +10,7 @@
   position: relative;
 }
 
-/* slim red accent at the very top */
+/* slim red accent */
 .footer::before {
   content: '';
   position: absolute;
@@ -25,8 +25,10 @@
   padding: 20px 16px;
 
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr;
-  gap: 24px;
+  grid-template-columns: 1.3fr 1fr 0.9fr; /* brand | links | repo */
+  gap: 28px;
+  align-items: start;
+  text-align: left; /* default left alignment */
 }
 
 .brand {
@@ -50,10 +52,15 @@
   color: var(--fg);
 }
 
-.links {
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: grid;
   gap: 8px;
+  justify-items: start; /* keep items left-aligned */
 }
+
 .link {
   color: var(--fg);
   text-decoration: none;
@@ -70,8 +77,14 @@
   border-color: rgba(225, 29, 42, 0.35);
 }
 
+/* repo column sits to the right on wide screens */
+.right {
+  justify-self: end;
+  text-align: right;
+}
+
 .social {
-  display: flex;
+  display: inline-flex;
   gap: 10px;
 }
 .iconBtn {
@@ -116,7 +129,7 @@
   background: var(--border);
 }
 
-/* Back-to-top button (appears after scroll) */
+/* back-to-top */
 .backTop {
   position: fixed;
   right: 16px;
@@ -141,12 +154,13 @@
   background: var(--primary-600);
 }
 
-/* Responsive */
+/* responsive */
 @media (max-width: 900px) {
   .inner {
     grid-template-columns: 1fr;
   }
-  .social {
-    margin-top: 4px;
+  .right {
+    justify-self: start;
+    text-align: left;
   }
 }
