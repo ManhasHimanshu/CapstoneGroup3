@@ -1,20 +1,35 @@
-import React, { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
-import styles from '../styles/Navbar.module.css'; // module import
+import React, { useEffect, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import styles from '../styles/Navbar.module.css';
+import HomePlateLogo from './icons/HomePlateLogo.jsx';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => setOpen(false), [location.pathname]);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   const linkClass = ({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`;
 
   return (
-    <header className={styles.navbar}>
+    <header className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}>
       <div className={styles.inner}>
         <Link to="/" className={styles.brand}>
+          <span className={styles.brandIcon}>
+            <HomePlateLogo />
+          </span>
           Baseball Boys INC
         </Link>
 
         <button
-          className={styles.menuBtn}
+          className={`${styles.menuBtn} ${open ? styles.btnOpen : ''}`}
           aria-expanded={open}
           aria-controls="primary-navigation"
           aria-label="Toggle navigation"
@@ -23,12 +38,8 @@ export default function Navbar() {
           <span className={styles.menuIcon} aria-hidden="true" />
         </button>
 
-        <nav
-          id="primary-navigation"
-          className={`${styles.links} ${open ? styles.open : ''}`}
-          onClick={() => setOpen(false)}
-        >
-          <NavLink to="/" end className={linkClass}>
+        <nav id="primary-navigation" className={`${styles.links} ${open ? styles.open : ''}`}>
+          <NavLink end to="/" className={linkClass}>
             Home
           </NavLink>
           <NavLink to="/login" className={linkClass}>
