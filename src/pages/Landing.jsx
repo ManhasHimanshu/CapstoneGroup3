@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styles from '../styles/Landing.module.css';
 import heroAvif from '../assets/photo-1684848310804-4abaf019c672.avif';
@@ -24,8 +24,39 @@ const testimonials = [
 ];
 
 export default function Landing() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 4000); // Match the animation duration (1.5 seconds)
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <main>
+      {/* Fullscreen splash screen */}
+      {showSplash && (
+        <div 
+          className={styles.splashScreen}
+          style={{
+            animationDuration: '4s',
+            animationTimingFunction: 'ease-in-out',
+            animationFillMode: 'forwards'
+          }}
+        >
+          <div className={styles.splashContent}>
+            <iframe 
+              src="/splash_screens/official_logo/index.html" 
+              title="Splash Screen" 
+              allow="autoplay" 
+              className={styles.splashIframe}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Full-bleed photo hero */}
       <section className={styles.heroBanner} aria-labelledby="hero-title">
         <img
