@@ -180,8 +180,11 @@ def filter_baseballs(frames):
         best_mask = circles[best_fit_idx]
         new_circles.append(best_mask)
 
+        if score_arr[f_idx][best_fit_idx] < 0.87:
+            new_circles = []
+
         f.set_circles(np.array(new_circles))
-    
+
         
     return frames
 
@@ -191,7 +194,7 @@ def filter_baseballs(frames):
 # return: Returns an a 2D list of scores pertaining to each circular mask in each 
 # frame object
 '''
-def filter_white(frames):
+def filter_white(frames, weight = 0.20):
     score_arr = []
 
     for f in frames:
@@ -217,7 +220,8 @@ def filter_white(frames):
             channel_diff = int(max(b, g, r_col)) - int(min(b, g, r_col))
             brightness = (int(r_col) + int(g) + int(b)) / 3
 
-            score = (brightness + (255 - channel_diff)) / 100
+            #score = (brightness + (255 - channel_diff)) / 100
+            score = (brightness/255) * ((255-channel_diff)/255) * weight
             scores.append(score)
 
         score_arr.append(scores)
@@ -279,7 +283,13 @@ def filter_white(frames, colourdiff_min, bright_min):
 # Assigns a score to each circular mask within a frame based on the distance to the 
 # previous highest weighted circular mask
 '''
-def filter_overlap(frames, score_arr):
+def filter_overlap(frames, score_arr, weight = 0.8):
+
+    zero_circles = frames[0].get_circles()
+
+    for c_idx, c in enumerate(zero_circles):
+
+        score_arr[0][c_idx] += 1 * weight
 
     for f in range(1, len(frames)):
 
@@ -293,16 +303,22 @@ def filter_overlap(frames, score_arr):
         prev_best_fit = previous_circles[best_fit_idx]
         x1, y1, _ = prev_best_fit
 
+        height, width = frames[0].get_dimensions()
+        max_dist = math.hypot(height, width)
+
         for c_idx, c in enumerate(current_circles):
             x2, y2, _ = c
-            dist = math.hypot(x2 - x1, y2 - y1)*100
+            dist = math.hypot(x2 - x1, y2 - y1)
 
-            score_arr[f][c_idx] -= dist
+            percent_max = dist/max_dist
+            score = (1 - percent_max) * weight
+
+            score_arr[f][c_idx] += score
 
     return score_arr         
 
 
 def filter_moving():
-    a=1
+    return 0
 
-run(r"C:\Github\CHT_Baseball_Tracking\V2\Videos","test_vid5",r"C:\Github\CHT_Baseball_Tracking\V2\Frames",r"C:\Github\CHT_Baseball_Tracking\V2\End_Frames")
+run(r"C:\Github\CapstoneGroup3\Ball_Tracking\Videos","test_vid5",r"C:\Github\CapstoneGroup3\Ball_Tracking\Frames",r"C:\Github\CapstoneGroup3\Ball_Tracking\End_Frames")

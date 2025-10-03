@@ -15,3 +15,7 @@ class frame:
 
     def set_circles(self, new_circles):
         self.circles = new_circles
+
+    def get_dimensions(self):
+        height, width = self.image.shape[:2]
+        return height, width
