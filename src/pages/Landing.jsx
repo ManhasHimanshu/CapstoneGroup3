@@ -38,19 +38,19 @@ export default function Landing() {
     <main>
       {/* Fullscreen splash screen */}
       {showSplash && (
-        <div 
+        <div
           className={styles.splashScreen}
           style={{
             animationDuration: '4s',
             animationTimingFunction: 'ease-in-out',
-            animationFillMode: 'forwards'
+            animationFillMode: 'forwards',
           }}
         >
           <div className={styles.splashContent}>
-            <iframe 
-              src="/splash_screens/official_logo/index.html" 
-              title="Splash Screen" 
-              allow="autoplay" 
+            <iframe
+              src="/splash_screens/official_logo/index.html"
+              title="Splash Screen"
+              allow="autoplay"
               className={styles.splashIframe}
             />
           </div>

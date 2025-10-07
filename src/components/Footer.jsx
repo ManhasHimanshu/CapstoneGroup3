@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styles from '../styles/Footer.module.css';
 
-/* minimal inline icons (no deps) */
 const GitHub = () => (
   <svg
     className={styles.icon}
@@ -33,7 +32,6 @@ const LinkOut = () => (
   </svg>
 );
 
-/* floating back-to-top */
 function BackToTop() {
   const [show, setShow] = useState(false);
   useEffect(() => {
@@ -63,27 +61,38 @@ export default function Footer() {
         <div className={styles.inner}>
           <div className={styles.group}>
             <Link to="/" className={styles.brand}>
-              Baseball Boys INC
+              First Base Tool
             </Link>
+            <p className={styles.tagline}>Clean React starter · Red / White / Black</p>
           </div>
 
-          <nav className={`${styles.group} ${styles.links}`} aria-label="Site links">
-            <h4 id="footer-heading">Explore</h4>
-            <Link to="/" className={styles.link}>
-              Home
-            </Link>
-            <Link to="/login" className={styles.link}>
-              Login
-            </Link>
-            <Link to="/signup" className={styles.link}>
-              Sign Up
-            </Link>
-            <Link to="/dashboard" className={styles.link}>
-              Dashboard
-            </Link>
+          <nav className={styles.group} aria-labelledby="explore-heading">
+            <h4 id="explore-heading">Explore</h4>
+            <ul className={styles.list}>
+              <li>
+                <Link to="/" className={styles.link}>
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link to="/login" className={styles.link}>
+                  Login
+                </Link>
+              </li>
+              <li>
+                <Link to="/signup" className={styles.link}>
+                  Sign Up
+                </Link>
+              </li>
+              <li>
+                <Link to="/dashboard" className={styles.link}>
+                  Dashboard
+                </Link>
+              </li>
+            </ul>
           </nav>
 
-          <div className={styles.group} aria-label="Social links">
+          <div className={`${styles.group} ${styles.right}`} aria-label="Repository">
             <h4>Repo</h4>
             <div className={styles.social}>
               <a

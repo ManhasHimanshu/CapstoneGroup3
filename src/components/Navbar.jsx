@@ -25,7 +25,7 @@ export default function Navbar() {
           <span className={styles.brandIcon}>
             <HomePlateLogo />
           </span>
-          Baseball Boys INC
+          First Base Tool
         </Link>
 
         <button
