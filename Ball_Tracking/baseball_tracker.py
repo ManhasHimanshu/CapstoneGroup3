@@ -2,6 +2,7 @@ import cv2
 import os
 import numpy as np
 import math
+import re
 from frame import frame
 
 
@@ -28,7 +29,11 @@ def run(video_path, video_name, frame_path, result_path):
     print("Saving Tracked Images...")
     save_processed(frames, result_path, video_name)
 
+    print("Recompiling video...")
+    remake_video(result_path, os.path.join(result_path, "end.mp4"))
+
     print("Results found at " + result_path)
+
 
 
 '''
@@ -62,7 +67,67 @@ def save_processed(frames, result_path, video_name):
         final_img_path = os.path.join(result_path, f"{video_name}{frame_idx}.jpg")
         cv2.imwrite(final_img_path, img)
 
-        
+'''
+def remake_video(results_path, video_name, fps = 60):
+
+    frame_files = sorted([f for f in os.listdir(results_path) if f.endswith(".jpg")])
+
+    first_frame = os.path.join(results_path, frame_files[0]) 
+
+    frame = cv2.imread(first_frame)
+
+    height, width, _ = frame.shape
+
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    out = cv2.VideoWriter(results_path, fourcc, fps, (width, height))
+
+    for filename in frame_files:
+        frame_path = os.path.join(results_path, filename)
+        frame = cv2.imread(frame_path)
+        if frame is None:
+            print(f"Warning: Skipping unreadable frame {filename}")
+            continue
+        out.write(frame)
+
+    out.release()
+'''
+
+def remake_video(frames_dir, output_path, fps=30, image_ext=".jpg"):
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    def numerical_sort(value):
+        numbers = re.findall(r'\d+', value)
+        return int(numbers[-1]) if numbers else -1
+
+    frame_files = sorted(
+        [f for f in os.listdir(frames_dir) if f.lower().endswith(image_ext.lower())],
+        key=numerical_sort
+    )
+
+    if not frame_files:
+        raise ValueError(f"No frames with extension '{image_ext}' found in {frames_dir}")
+
+    first_frame = cv2.imread(os.path.join(frames_dir, frame_files[0]))
+    if first_frame is None:
+        raise IOError("Cannot read first frame.")
+    height, width, _ = first_frame.shape
+
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+    print(f"Compiling {len(frame_files)} frames into '{output_path}' ({width}x{height} @ {fps} FPS)")
+
+    for filename in frame_files:
+        frame_path = os.path.join(frames_dir, filename)
+        frame = cv2.imread(frame_path)
+        if frame is None:
+            print(f"⚠️ Skipping unreadable frame {filename}")
+            continue
+        if frame.shape[:2] != (height, width):
+            frame = cv2.resize(frame, (width, height))
+        out.write(frame)
+
 '''
 # video_path (string): Filepath to the folder containing the video to be processed
 # video_name (string): Filename of the video to be processed
@@ -168,6 +233,9 @@ def filter_baseballs(frames, rad_sense = 20, overlap_min = 5, overlap_max = 70, 
 # the previous best mask, then only keeps the best match for each frame
 '''
 def filter_baseballs(frames):
+
+    # NOTE: TRY CROPPING DOWN VIDEO ONCE BALL HAS BEEN FOUND, WILL REQUIRE REFACTORING
+
     print("Scoring Mask Whiteness...")
 
     score_arr = filter_white(frames)
