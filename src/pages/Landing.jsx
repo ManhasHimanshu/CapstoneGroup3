@@ -24,14 +24,19 @@ const testimonials = [
 ];
 
 export default function Landing() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 4000); // Match the animation duration (1.5 seconds)
+    const hasShownSplash = sessionStorage.getItem('hasShownSplash');
 
-    return () => clearTimeout(timer);
+    if (!hasShownSplash) {
+      setShowSplash(true);
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+        sessionStorage.setItem('hasShownSplash', 'true');
+      }, 4000); // Match animation duration
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   return (
@@ -57,7 +62,7 @@ export default function Landing() {
         </div>
       )}
 
-      {/* Full-bleed photo hero */}
+      {/* Hero Section */}
       <section className={styles.heroBanner} aria-labelledby="hero-title">
         <img
           src={heroAvif}
@@ -84,9 +89,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Main content width */}
+      {/* Highlights */}
       <div className={styles.wrap}>
-        {/* Three key points */}
         <section className={styles.features} aria-label="Highlights">
           <article className={styles.card}>
             <span className={styles.kicker}>Accurate</span>
