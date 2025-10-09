@@ -63,7 +63,6 @@ export default function Footer() {
             <Link to="/" className={styles.brand}>
               First Base Tool
             </Link>
-            <p className={styles.tagline}>Clean React starter · Red / White / Black</p>
           </div>
 
           <nav className={styles.group} aria-labelledby="explore-heading">
