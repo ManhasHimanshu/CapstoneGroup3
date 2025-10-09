@@ -1,38 +1,43 @@
-import { useState } from 'react';
+// src/pages/Dashboard.jsx
+import { useEffect, useState } from 'react';
 import styles from '../../styles/Dashboard.module.css';
-import SwingPanel from '../../components/SwingPanel.jsx';
 import SwingSerialPanel from '../../components/SwingSerialPanel.jsx';
+import SwingPanel from '../../components/SwingPanel.jsx';
 
 export default function Dashboard() {
-  // default to USB so we don't request /api when the server isn't running
-  const [mode, setMode] = useState('usb'); // 'usb' or 'api'
+  const [tab, setTab] = useState(() => localStorage.getItem('dashTab') || 'usb');
+  useEffect(() => {
+    localStorage.setItem('dashTab', tab);
+  }, [tab]);
 
   return (
-    <main className={styles.root}>
-      <section className={styles.header}>
-        <div className={styles.headerInner}>
-          <h1>Dashboard</h1>
-          <p>Live swing analytics from your ESP32 sensor.</p>
-          <div className={styles.tabs}>
+    <div className={styles.proThemeDark}>
+      {/* swap to styles.proThemeLight if you prefer */}
+      <div className={styles.dashWrap}>
+        <header className={styles.panelHeader} style={{ marginBottom: 8 }}>
+          <h1 style={{ margin: 0, fontSize: 'clamp(1.2rem, 0.9rem + 1vw, 1.6rem)' }}>Dashboard</h1>
+          <div className={styles.actionsRow}>
             <button
-              className={`${styles.tab} ${mode === 'api' ? styles.tabActive : ''}`}
-              onClick={() => setMode('api')}
-              type="button"
-            >
-              API (Wi-Fi/SoftAP)
-            </button>
-            <button
-              className={`${styles.tab} ${mode === 'usb' ? styles.tabActive : ''}`}
-              onClick={() => setMode('usb')}
-              type="button"
+              className={styles.tabBtn}
+              aria-pressed={tab === 'usb'}
+              onClick={() => setTab('usb')}
+              title="Connect over USB with Web Serial"
             >
               USB (Web Serial)
             </button>
+            <button
+              className={styles.tabBtn}
+              aria-pressed={tab === 'api'}
+              onClick={() => setTab('api')}
+              title="Receive swings from your Node server"
+            >
+              Wi-Fi / API
+            </button>
           </div>
-        </div>
-      </section>
+        </header>
 
-      <div className={styles.wrap}>{mode === 'api' ? <SwingPanel /> : <SwingSerialPanel />}</div>
-    </main>
+        {tab === 'usb' ? <SwingSerialPanel /> : <SwingPanel />}
+      </div>
+    </div>
   );
 }
