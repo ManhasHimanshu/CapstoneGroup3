@@ -92,7 +92,7 @@ def remake_video(results_path, video_name, fps = 60):
     out.release()
 '''
 
-def remake_video(frames_dir, output_path, fps=30, image_ext=".jpg"):
+def remake_video(frames_dir, output_path, fps=120, image_ext=".jpg"):
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
@@ -178,7 +178,7 @@ def extract_frames(video_path, video_name, output_path):
 # generate circular masks, packages each frame into a frame object, and compiles all
 # frames into an ordered list
 '''
-def mask_frames(frame_path, video_name, frame_count, alg_sens = 16, accum_thresh = 70, min_rad = 1, max_rad = 10):
+def mask_frames(frame_path, video_name, frame_count, alg_sens = 5, accum_thresh = 70, min_rad = 1, max_rad = 10):
 
     frames = []
 
@@ -271,7 +271,7 @@ def filter_baseballs(frames):
 # return: Returns an a 2D list of scores pertaining to each circular mask in each 
 # frame object
 '''
-def filter_white(frames, weight = 0.20):
+def filter_white(frames, weight = 0.2):
     score_arr = []
 
     for f in frames:
@@ -365,68 +365,60 @@ def filter_white(frames, colourdiff_min, bright_min):
 # Assigns a score to each circular mask within a frame based on the distance to the 
 # previous highest weighted circular mask
 '''
-def filter_overlap(frames, score_arr, weight = 0.8):
-
-    # Consider weighing anything outside of 5ish percent of the best mask as 0
+def filter_overlap(frames, score_arr, weight=0.8):
 
     zero_circles = frames[0].get_circles()
-
-    for c_idx, c in enumerate(zero_circles):
-
-        score_arr[0][c_idx] += 1 * weight
-        
+    for c_idx, _ in enumerate(zero_circles):
+        score_arr[0][c_idx] += weight
 
     for f in range(1, len(frames)):
 
-        current_circles = np.array(frames[f].get_circles()).reshape(-1, 3)
-        previous_circles = np.array(frames[f-1].get_circles()).reshape(-1, 3)
+        current_circles = frames[f].get_circles()
+        previous_circles = frames[f-1].get_circles()
 
-        if len(previous_circles) == 0:
+        if len(previous_circles) == 0 and len(current_circles) > 0:
+            for c_idx in range(len(current_circles)):
+                score_arr[f][c_idx] = weight
+            continue
 
-            for c_idx, c in enumerate(current_circles):
-
-                 score_arr[f][c_idx] = 1 * weight
-                 continue
-
-        if len(previous_circles) == 0 or len(current_circles) == 0: continue
+        if len(previous_circles) == 0 or len(current_circles) == 0:
+            continue
 
         best_fit_idx = int(np.argmax(score_arr[f-1]))
-        prev_best_fit = previous_circles[best_fit_idx]
-        x1, y1, _ = prev_best_fit
+        best_fit_idx = min(best_fit_idx, len(previous_circles) - 1)
+
+        x1, y1, _ = previous_circles[best_fit_idx]
 
         height, width = frames[0].get_dimensions()
         max_dist = math.hypot(height, width)
 
-        for c_idx, c in enumerate(current_circles):
-
-            x2, y2, _ = c
+        for c_idx, (x2, y2, _) in enumerate(current_circles):
             dist = math.hypot(x2 - x1, y2 - y1)
-
-            percent_max = dist/max_dist
-            score = (1 - percent_max) * weight
-
+            score = (1 - dist / max_dist) * weight
             score_arr[f][c_idx] += score
 
-    return score_arr         
+    return score_arr   
 
 
-def filter_moving(frames, score_arr, weight = 0, ideal_delta = -2):
-    
+def filter_moving(frames, score_arr, weight=0, ideal_delta=-2):
+
     for f in range(1, len(frames)):
 
-        current_circles = np.array(frames[f].get_circles()).reshape(-1, 3)
-        previous_circles = np.array(frames[f-1].get_circles()).reshape(-1, 3)
+        current_circles = frames[f].get_circles()
+        previous_circles = frames[f-1].get_circles()
 
-        if len(previous_circles) == 0 or len(current_circles) == 0: continue
+        if len(previous_circles) == 0 or len(current_circles) == 0:
+            continue
 
         best_fit_idx = int(np.argmax(score_arr[f-1]))
-        prev_best_fit = previous_circles[best_fit_idx]
-        _, _, r = prev_best_fit
+        best_fit_idx = min(best_fit_idx, len(previous_circles) - 1)
 
-        for c_idx,c in enumerate(current_circles):
+        _, _, r = previous_circles[best_fit_idx]
+
+        for c_idx, c in enumerate(current_circles):
 
             delta = c[2] - r
-            score = abs(min(ideal_delta,delta)/max(ideal_delta,delta)) * weight
+            score = abs(min(ideal_delta, delta) / max(ideal_delta, delta)) * weight
 
             score_arr[f][c_idx] += score
 
@@ -435,4 +427,4 @@ def filter_moving(frames, score_arr, weight = 0, ideal_delta = -2):
 
 
 
-run(r"C:\Github\CapstoneGroup3\Ball_Tracking\Videos","test_vid5",r"C:\Github\CapstoneGroup3\Ball_Tracking\Frames",r"C:\Github\CapstoneGroup3\Ball_Tracking\End_Frames")
+run(r"C:\Github\CapstoneGroup3\Ball_Tracking\Videos","test_vid6",r"C:\Github\CapstoneGroup3\Ball_Tracking\Frames",r"C:\Github\CapstoneGroup3\Ball_Tracking\End_Frames")
