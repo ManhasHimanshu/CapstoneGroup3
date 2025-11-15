@@ -1,1 +1,7 @@
-Ball_TrackingAI/.venv
+Ball_TrackingAI/
+Ball_Tracking/Videos/
+Ball_Tracking/Frames/
+Ball_Tracking/Demo/
+Ball_Tracking/__pycache__/
+Ball_Tracking/End_Frames/
+Ball_Tracking/Live_Version/
