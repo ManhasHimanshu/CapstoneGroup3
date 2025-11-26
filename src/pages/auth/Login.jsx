@@ -33,8 +33,8 @@ const Login = () => {
       
       <div className={styles.loginCard}>
         <div className={styles.header}>
-          <h1 className={styles.title}>⚾ Grand Slam Login</h1>
-          <p className={styles.subtitle}>Step up to the plate and access your account</p>
+          <h1 className={styles.title}>Login</h1>
+          <p className={styles.subtitle}>Please enter your credentials to track progress</p>
         </div>
         
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -65,7 +65,7 @@ const Login = () => {
           </div>
           
           <button type="submit" className={styles.loginButton}>
-            Swing Away! ⚾
+            Login 
           </button>
         </form>
         

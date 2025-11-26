@@ -6,7 +6,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 export default function SwingPanel() {
   const [latest, setLatest] = useState(null);
   const [recent, setRecent] = useState([]);
-  const [liveStatus, setLiveStatus] = useState('connecting'); // connecting | live | polling | offline
+  const [liveStatus, setLiveStatus] = useState('polling'); // live | polling | offline
   const esRef = useRef(null);
   const pollRef = useRef(null);
   const retryRef = useRef(0);
@@ -17,6 +17,7 @@ export default function SwingPanel() {
       pollRef.current = null;
     }
   }
+
   async function fetchLast() {
     try {
       const r = await fetch(`${API_BASE}/last`, { cache: 'no-store' });
@@ -35,6 +36,7 @@ export default function SwingPanel() {
       }
     }
   }
+
   function startPolling() {
     stopPolling();
     setLiveStatus('polling');
@@ -43,49 +45,72 @@ export default function SwingPanel() {
 
   useEffect(() => {
     let cancelled = false;
+
+    // 1) Always start polling so we never sit in "Offline" if SSE fails
+    startPolling();
+
+    // 2) Initial history fetch
     (async () => {
       try {
-        const hist = await fetch(`${API_BASE}/swings?limit=20`, { cache: 'no-store' }).then((r) =>
-          r.json()
-        );
+        const hist = await fetch(`${API_BASE}/swings?limit=20`, {
+          cache: 'no-store',
+        }).then((r) => r.json());
+
         if (!cancelled) {
           setRecent(hist);
-          if (hist[0]) setLatest(hist[0]);
-          else setLatest(await fetch(`${API_BASE}/last`).then((r) => r.json()));
+          if (hist[0]) {
+            setLatest(hist[0]);
+          } else {
+            const last = await fetch(`${API_BASE}/last`, {
+              cache: 'no-store',
+            }).then((r) => r.json());
+            setLatest(last);
+          }
         }
-      } catch {}
+      } catch {
+        // ignore; polling will still try /last
+      }
     })();
 
+    // 3) Try to upgrade to Live SSE if available
     if ('EventSource' in window) {
       const es = new EventSource(`${API_BASE}/stream`);
       esRef.current = es;
+
       es.onopen = () => {
         stopPolling();
         setLiveStatus('live');
       };
+
       es.onmessage = (ev) => {
         try {
           const s = JSON.parse(ev.data);
           setLatest(s);
           setRecent((prev) => [s, ...prev].slice(0, 20));
-        } catch {}
+        } catch {
+          // ignore bad JSON
+        }
       };
+
       es.onerror = () => {
         es.close();
+        // fall back to polling
         startPolling();
+        setLiveStatus('polling');
       };
+
       return () => {
         es.close();
-        stopPolling();
-        cancelled = true;
-      };
-    } else {
-      startPolling();
-      return () => {
         stopPolling();
         cancelled = true;
       };
     }
+
+    // No EventSource support -> just keep polling
+    return () => {
+      stopPolling();
+      cancelled = true;
+    };
   }, []);
 
   const pillClass =
@@ -102,7 +127,11 @@ export default function SwingPanel() {
       <div className={styles.panelHeader}>
         <h2>Swing Summary</h2>
         <span className={`${styles.pill} ${pillClass}`}>
-          {liveStatus === 'live' ? 'Live (SSE)' : liveStatus === 'polling' ? 'Polling' : 'Offline'}
+          {liveStatus === 'live'
+            ? 'Live (SSE)'
+            : liveStatus === 'polling'
+              ? 'Polling'
+              : 'Offline'}
         </span>
       </div>
 
@@ -199,6 +228,7 @@ export default function SwingPanel() {
 }
 
 /* ---------- helpers / subcomponents ---------- */
+
 function Metric({ label, value, suffix }) {
   return (
     <div className={styles.metric}>
@@ -214,9 +244,9 @@ function Metric({ label, value, suffix }) {
 function computeStats(rows) {
   const count = rows.length;
   if (!count) return { count: 0, bestPeak: 0, avgPeak: 0, avgDur: 0 };
-  let bestPeak = -Infinity,
-    sumPeak = 0,
-    sumDur = 0;
+  let bestPeak = -Infinity;
+  let sumPeak = 0;
+  let sumDur = 0;
   for (const r of rows) {
     const p = Number(r.peak_omega_rad_s) || 0;
     const d = Number(r.duration_ms) || 0;
@@ -224,7 +254,12 @@ function computeStats(rows) {
     sumPeak += p;
     sumDur += d;
   }
-  return { count, bestPeak, avgPeak: sumPeak / count, avgDur: sumDur / count };
+  return {
+    count,
+    bestPeak,
+    avgPeak: sumPeak / count,
+    avgDur: sumDur / count,
+  };
 }
 
 function exportCSV(rows) {
@@ -238,7 +273,9 @@ function exportCSV(rows) {
     't_end_ms',
     'receivedAt',
   ];
-  const lines = [header.join(',')].concat(rows.map((r) => header.map((k) => r[k] ?? '').join(',')));
+  const lines = [header.join(',')].concat(
+    rows.map((r) => header.map((k) => (r[k] ?? '')).toString())
+  );
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -254,10 +291,12 @@ function copyLatestJSON(obj) {
 }
 
 function MiniChart({ data }) {
-  const w = 600,
-    h = 120,
-    pad = 8;
+  const w = 600;
+  const h = 120;
+  const pad = 8;
+
   if (!data?.length) return <div className={styles.chartEmpty}>No data yet.</div>;
+
   const max = Math.max(...data);
   const min = Math.min(...data);
   const span = Math.max(1e-6, max - min);
@@ -265,6 +304,7 @@ function MiniChart({ data }) {
   const y = (v) => h - pad - ((v - min) / span) * (h - pad * 2);
   const pts = data.map((v, i) => `${pad + i * stepX},${y(v)}`).join(' ');
   const d = 'M ' + pts.replaceAll(' ', ' L ');
+
   return (
     <div className={styles.chartWrap}>
       <svg viewBox={`0 0 ${w} ${h}`} className={styles.chart}>
