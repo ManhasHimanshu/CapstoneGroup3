@@ -2,6 +2,7 @@ import cv2
 import os
 import numpy as np
 import math
+import re
 from frame import frame
 
 
@@ -12,7 +13,7 @@ from frame import frame
 # result_path (String): Filepath to the file which the tracked frames will be stored
 #
 # Runs the full process of tracking a baseball within a video. Order of opperations
-# is as follows: Frame Extraction -> Frame Masking -> Mask Filtering -> file saving
+# is as follows: Frame Extraction -> Frame Masking -> Mask Filtering -> File saving
 '''
 def run(video_path, video_name, frame_path, result_path):
 
@@ -28,7 +29,11 @@ def run(video_path, video_name, frame_path, result_path):
     print("Saving Tracked Images...")
     save_processed(frames, result_path, video_name)
 
+    print("Recompiling video...")
+    remake_video(result_path, os.path.join(result_path, "end.mp4"))
+
     print("Results found at " + result_path)
+
 
 
 '''
@@ -45,19 +50,84 @@ def save_processed(frames, result_path, video_name):
     os.makedirs(result_path, exist_ok=True)
 
     for frame_idx, frame in enumerate(frames):
+
         img = frame.get_image().copy()
         circles = frame.get_circles()
 
         if circles is not None:
+
             circles = np.array(circles, dtype=np.float32).reshape(-1, 3)
+
             for circle in circles:
+
                 x, y, r = map(int, circle)
                 cv2.circle(img, (x, y), r, (0, 255, 0), 2)
                 cv2.circle(img, (x, y), 2, (0, 0, 255), 3)
 
         final_img_path = os.path.join(result_path, f"{video_name}{frame_idx}.jpg")
         cv2.imwrite(final_img_path, img)
-        
+
+'''
+def remake_video(results_path, video_name, fps = 60):
+
+    frame_files = sorted([f for f in os.listdir(results_path) if f.endswith(".jpg")])
+
+    first_frame = os.path.join(results_path, frame_files[0]) 
+
+    frame = cv2.imread(first_frame)
+
+    height, width, _ = frame.shape
+
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    out = cv2.VideoWriter(results_path, fourcc, fps, (width, height))
+
+    for filename in frame_files:
+        frame_path = os.path.join(results_path, filename)
+        frame = cv2.imread(frame_path)
+        if frame is None:
+            print(f"Warning: Skipping unreadable frame {filename}")
+            continue
+        out.write(frame)
+
+    out.release()
+'''
+
+def remake_video(frames_dir, output_path, fps=120, image_ext=".jpg"):
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    def numerical_sort(value):
+        numbers = re.findall(r'\d+', value)
+        return int(numbers[-1]) if numbers else -1
+
+    frame_files = sorted(
+        [f for f in os.listdir(frames_dir) if f.lower().endswith(image_ext.lower())],
+        key=numerical_sort
+    )
+
+    if not frame_files:
+        raise ValueError(f"No frames with extension '{image_ext}' found in {frames_dir}")
+
+    first_frame = cv2.imread(os.path.join(frames_dir, frame_files[0]))
+    if first_frame is None:
+        raise IOError("Cannot read first frame.")
+    height, width, _ = first_frame.shape
+
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+    print(f"Compiling {len(frame_files)} frames into '{output_path}' ({width}x{height} @ {fps} FPS)")
+
+    for filename in frame_files:
+        frame_path = os.path.join(frames_dir, filename)
+        frame = cv2.imread(frame_path)
+        if frame is None:
+            print(f"⚠️ Skipping unreadable frame {filename}")
+            continue
+        if frame.shape[:2] != (height, width):
+            frame = cv2.resize(frame, (width, height))
+        out.write(frame)
+
 '''
 # video_path (string): Filepath to the folder containing the video to be processed
 # video_name (string): Filename of the video to be processed
@@ -68,6 +138,7 @@ def save_processed(frames, result_path, video_name):
 # and saves them to the desired folder
 '''
 def extract_frames(video_path, video_name, output_path):
+
     os.makedirs(output_path, exist_ok=True)
 
     video_path_complete = os.path.join(video_path, f"{video_name}.mp4")
@@ -80,6 +151,7 @@ def extract_frames(video_path, video_name, output_path):
     count = 0
 
     while success:
+
         filename = os.path.join(output_path, f"{video_name}{count}.jpg")
         saved = cv2.imwrite(filename, image)
         print(f"Saved {filename}: {saved}")
@@ -106,7 +178,7 @@ def extract_frames(video_path, video_name, output_path):
 # generate circular masks, packages each frame into a frame object, and compiles all
 # frames into an ordered list
 '''
-def mask_frames(frame_path, video_name, frame_count, alg_sens = 16, accum_thresh = 70, min_rad = 1, max_rad = 10):
+def mask_frames(frame_path, video_name, frame_count, alg_sens = 5, accum_thresh = 70, min_rad = 1, max_rad = 10):
 
     frames = []
 
@@ -116,8 +188,7 @@ def mask_frames(frame_path, video_name, frame_count, alg_sens = 16, accum_thresh
         print(img_path)
         img_color = cv2.imread(img_path)
 
-        if img_color is None:
-            raise FileNotFoundError(f"Could not read image at {img_path}")
+        if img_color is None: raise FileNotFoundError(f"Could not read image at {img_path}")
 
         img_gray = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
         img_gray = cv2.GaussianBlur(img_gray, (3, 3), 0)
@@ -126,7 +197,7 @@ def mask_frames(frame_path, video_name, frame_count, alg_sens = 16, accum_thresh
             img_gray,
             cv2.HOUGH_GRADIENT,
             dp = 1,
-            minDist =15,
+            minDist = 50,
             param1 = accum_thresh,
             param2 = alg_sens,
             minRadius = min_rad,
@@ -162,17 +233,22 @@ def filter_baseballs(frames, rad_sense = 20, overlap_min = 5, overlap_max = 70, 
 # the previous best mask, then only keeps the best match for each frame
 '''
 def filter_baseballs(frames):
+
+    # NOTE: TRY CROPPING DOWN VIDEO ONCE BALL HAS BEEN FOUND, WILL REQUIRE REFACTORING
+
     print("Scoring Mask Whiteness...")
 
     score_arr = filter_white(frames)
 
     score_arr = filter_overlap(frames, score_arr)
 
+    score_arr = filter_moving(frames, score_arr)
+
     for f_idx, f in enumerate(frames):
+
         new_circles = []
 
-        if len(score_arr[f_idx]) == 0:
-            continue
+        if len(score_arr[f_idx]) == 0: continue
 
         best_fit_idx = int(np.argmax(score_arr[f_idx]))
         circles = np.array(f.get_circles(), dtype=np.float32).reshape(-1, 3)
@@ -180,25 +256,31 @@ def filter_baseballs(frames):
         best_mask = circles[best_fit_idx]
         new_circles.append(best_mask)
 
+        if score_arr[f_idx][best_fit_idx] < 0.87: new_circles = []
+
         f.set_circles(np.array(new_circles))
-    
+
         
     return frames
 
 '''
 # frames (frame list): A sequential list of tracked frames. Each frame object contains
 # a np array of circles of the format (y,x,r), and a cv2 binary image
+# weight (float): The weight of the original (0,1) score to be included in the final 
+# score array. Weight value of all used filters must sum to 1.0
 # return: Returns an a 2D list of scores pertaining to each circular mask in each 
 # frame object
 '''
-def filter_white(frames):
+def filter_white(frames, weight = 0.2):
     score_arr = []
 
     for f in frames:
+
         img = f.get_image()
         circles = f.get_circles()
 
         if circles is None or len(circles) == 0:
+
             score_arr.append([])
             continue
 
@@ -206,6 +288,7 @@ def filter_white(frames):
         scores = []
 
         for c in circles:
+
             x, y, r = float(c[0]), float(c[1]), float(c[2])
 
             mask = np.zeros(img.shape[:2], dtype=np.uint8)
@@ -217,7 +300,8 @@ def filter_white(frames):
             channel_diff = int(max(b, g, r_col)) - int(min(b, g, r_col))
             brightness = (int(r_col) + int(g) + int(b)) / 3
 
-            score = (brightness + (255 - channel_diff)) / 100
+            #score = (brightness + (255 - channel_diff)) / 100
+            score = (brightness/255) * ((255-channel_diff)/255) * weight
             scores.append(score)
 
         score_arr.append(scores)
@@ -275,34 +359,72 @@ def filter_white(frames, colourdiff_min, bright_min):
 # a np array of circles of the format (y,x,r), and a cv2 binary image
 # score_Arr (list): The previous 2D list of scores pertaining to each frame and circle
 # belonging to that frame
+# weight (float): The weight of the original (0,1) score to be included in the final 
+# score array. Weight value of all used filters must sum to 1.0
 #
 # Assigns a score to each circular mask within a frame based on the distance to the 
 # previous highest weighted circular mask
 '''
-def filter_overlap(frames, score_arr):
+def filter_overlap(frames, score_arr, weight=0.8):
+
+    zero_circles = frames[0].get_circles()
+    for c_idx, _ in enumerate(zero_circles):
+        score_arr[0][c_idx] += weight
 
     for f in range(1, len(frames)):
 
-        current_circles = np.array(frames[f].get_circles()).reshape(-1, 3)
-        previous_circles = np.array(frames[f-1].get_circles()).reshape(-1, 3)
+        current_circles = frames[f].get_circles()
+        previous_circles = frames[f-1].get_circles()
+
+        if len(previous_circles) == 0 and len(current_circles) > 0:
+            for c_idx in range(len(current_circles)):
+                score_arr[f][c_idx] = weight
+            continue
 
         if len(previous_circles) == 0 or len(current_circles) == 0:
             continue
 
         best_fit_idx = int(np.argmax(score_arr[f-1]))
-        prev_best_fit = previous_circles[best_fit_idx]
-        x1, y1, _ = prev_best_fit
+        best_fit_idx = min(best_fit_idx, len(previous_circles) - 1)
+
+        x1, y1, _ = previous_circles[best_fit_idx]
+
+        height, width = frames[0].get_dimensions()
+        max_dist = math.hypot(height, width)
+
+        for c_idx, (x2, y2, _) in enumerate(current_circles):
+            dist = math.hypot(x2 - x1, y2 - y1)
+            score = (1 - dist / max_dist) * weight
+            score_arr[f][c_idx] += score
+
+    return score_arr   
+
+
+def filter_moving(frames, score_arr, weight=0, ideal_delta=-2):
+
+    for f in range(1, len(frames)):
+
+        current_circles = frames[f].get_circles()
+        previous_circles = frames[f-1].get_circles()
+
+        if len(previous_circles) == 0 or len(current_circles) == 0:
+            continue
+
+        best_fit_idx = int(np.argmax(score_arr[f-1]))
+        best_fit_idx = min(best_fit_idx, len(previous_circles) - 1)
+
+        _, _, r = previous_circles[best_fit_idx]
 
         for c_idx, c in enumerate(current_circles):
-            x2, y2, _ = c
-            dist = math.hypot(x2 - x1, y2 - y1)*100
 
-            score_arr[f][c_idx] -= dist
+            delta = c[2] - r
+            score = abs(min(ideal_delta, delta) / max(ideal_delta, delta)) * weight
 
-    return score_arr         
+            score_arr[f][c_idx] += score
+
+    return score_arr
 
 
-def filter_moving():
-    a=1
 
-run(r"C:\Github\CHT_Baseball_Tracking\V2\Videos","test_vid5",r"C:\Github\CHT_Baseball_Tracking\V2\Frames",r"C:\Github\CHT_Baseball_Tracking\V2\End_Frames")
+
+run(r"C:\Github\CapstoneGroup3\Ball_Tracking\Videos","test_vid6",r"C:\Github\CapstoneGroup3\Ball_Tracking\Frames",r"C:\Github\CapstoneGroup3\Ball_Tracking\End_Frames")
