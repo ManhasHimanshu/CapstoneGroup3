@@ -1,0 +1,357 @@
+/* --- Force a legible theme JUST for the dashboard --- */
+.root {
+  /* local vars (dark, high contrast) */
+  --bg: #0b0b0d;
+  --fg: #f5f7fa;
+
+  --surface: #121317;
+  --border: #26272b;
+  --muted: #9aa3b2;
+
+  --primary: #f05252;
+  --primary-contrast: #0b0b0d;
+
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  border-bottom: 1px solid var(--border);
+  background:
+    linear-gradient(to right, rgba(240, 82, 82, 0.1), transparent 40%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.2), transparent);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+.headerInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 24px);
+}
+.headerInner h1 {
+  margin: 0 0 4px;
+  font-size: clamp(1.6rem, 1.1rem + 1.6vw, 2.2rem);
+  color: var(--fg);
+}
+.headerInner p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Tabs */
+.tabs {
+  margin-top: 10px;
+  display: inline-flex;
+  gap: 8px;
+}
+.tab {
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.tabActive {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(240, 82, 82, 0.18);
+}
+
+/* Container width */
+.wrap {
+  width: min(1100px, 92vw);
+  margin: 16px auto 40px;
+}
+
+/* Panel */
+.panel {
+  display: grid;
+  gap: 16px;
+  font-family: system-ui, Arial;
+  color: var(--fg);
+}
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.panelHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--fg);
+}
+
+/* Cards */
+.card {
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: clamp(12px, 2vw, 16px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+.cardHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+/* Status pill + small button */
+.pill {
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.pillLive {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+.pillPoll {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+.pillOff {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.tabBtn {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+/* Metrics */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(10px, 2vw, 16px);
+}
+.metricLabel {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+.metricValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+/* Table */
+.tableWrap {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--fg);
+}
+.table thead th {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--fg);
+  font-weight: 600;
+}
+.table tbody td {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--fg);
+}
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 16px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .metricsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Insights grid */
+.insightsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(10px, 2vw, 16px);
+  margin-bottom: 10px;
+}
+.insight {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+}
+.kicker {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.actionsRow {
+  display: inline-flex;
+  gap: 8px;
+}
+.smallBtn {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+/* Mini chart */
+.chartWrap {
+  margin-top: 6px;
+}
+.chart {
+  width: 100%;
+  height: 120px;
+  display: block;
+}
+.chartPath {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+.chartAxis {
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1;
+}
+.chartLegend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+}
+.chartEmpty {
+  color: var(--muted);
+  padding: 6px 0;
+}
+
+/* Offline pill (used earlier) */
+.pillOff {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .insightsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .insightsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settingsRow {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.numberInput {
+  margin-left: 8px;
+  width: 88px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--fg);
+}
+.helpText {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pillOff {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.viewer {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0b0b0d;
+}
+
+/* Side-by-side layout for orientation + metrics/settings */
+.rowSplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(10px, 2vw, 16px);
+  align-items: stretch;
+}
+.stack {
+  display: grid;
+  gap: clamp(10px, 1.6vw, 14px);
+}
+
+/* Make the mph pop */
+.bigMetric {
+  font-size: clamp(1.6rem, 1.1rem + 2vw, 2.2rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+.bigMetricLabel {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .rowSplit {
+    grid-template-columns: 1fr;
+  }
+}
+
+.videoSection {
+  margin-top: 24px;
+}
+
+.videoCard {
+  background: #111;
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.videoPlayer {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 10px;
+}
