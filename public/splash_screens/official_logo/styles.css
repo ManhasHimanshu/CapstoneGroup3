@@ -1,0 +1,348 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000;
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.baseball {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    animation: zoom-in 3.5s ease-in 0.5s forwards;
+}
+
+.baseball-core {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f8f8f8 0%, #e8e8e8 100%);
+    box-shadow: 
+        inset 0 0 20px rgba(0, 0, 0, 0.2),
+        0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Baseball seams - two curved lines */
+.seam-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.seam {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+}
+
+/* Left seam (top left to bottom left) */
+.seam-left {
+    position: absolute;
+    width: 80%;
+    height: 80%;
+    top: 10%;
+    left: 10%;
+    border-radius: 50%;
+    border: 4px solid #c8102e;
+    clip-path: polygon(0% 0%, 50% 0%, 50% 100%, 0% 100%);
+    box-shadow: 0 0 8px rgba(200, 16, 46, 0.5);
+}
+
+/* Right seam (top right to bottom right) */
+.seam-right {
+    position: absolute;
+    width: 80%;
+    height: 80%;
+    top: 10%;
+    left: 10%;
+    border-radius: 50%;
+    border: 4px solid #c8102e;
+    clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%);
+    box-shadow: 0 0 8px rgba(200, 16, 46, 0.5);
+}
+
+/* Stitches on the left seam */
+.stitches-left {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.stitch-left {
+    position: absolute;
+    width: 12px;
+    height: 6px;
+    background-color: #c8102e;
+    border-radius: 3px;
+    box-shadow: 0 0 4px rgba(200, 16, 46, 0.7);
+    transform-origin: center;
+}
+
+/* Stitches on the right seam */
+.stitches-right {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.stitch-right {
+    position: absolute;
+    width: 12px;
+    height: 6px;
+    background-color: #c8102e;
+    border-radius: 3px;
+    box-shadow: 0 0 4px rgba(200, 16, 46, 0.7);
+    transform-origin: center;
+}
+
+/* Position stitches along the left seam */
+.stitch-left:nth-child(1) { top: 10%; left: 25%; transform: rotate(75deg); }
+.stitch-left:nth-child(2) { top: 20%; left: 22%; transform: rotate(65deg); }
+.stitch-left:nth-child(3) { top: 30%; left: 20%; transform: rotate(55deg); }
+.stitch-left:nth-child(4) { top: 40%; left: 19%; transform: rotate(45deg); }
+.stitch-left:nth-child(5) { top: 50%; left: 20%; transform: rotate(35deg); }
+.stitch-left:nth-child(6) { top: 60%; left: 22%; transform: rotate(25deg); }
+.stitch-left:nth-child(7) { top: 70%; left: 25%; transform: rotate(15deg); }
+.stitch-left:nth-child(8) { top: 80%; left: 30%; transform: rotate(5deg); }
+.stitch-left:nth-child(9) { top: 88%; left: 35%; transform: rotate(-5deg); }
+
+/* Position stitches along the right seam */
+.stitch-right:nth-child(1) { top: 10%; left: 75%; transform: rotate(-75deg); }
+.stitch-right:nth-child(2) { top: 20%; left: 78%; transform: rotate(-65deg); }
+.stitch-right:nth-child(3) { top: 30%; left: 80%; transform: rotate(-55deg); }
+.stitch-right:nth-child(4) { top: 40%; left: 81%; transform: rotate(-45deg); }
+.stitch-right:nth-child(5) { top: 50%; left: 80%; transform: rotate(-35deg); }
+.stitch-right:nth-child(6) { top: 60%; left: 78%; transform: rotate(-25deg); }
+.stitch-right:nth-child(7) { top: 70%; left: 75%; transform: rotate(-15deg); }
+.stitch-right:nth-child(8) { top: 80%; left: 70%; transform: rotate(-5deg); }
+.stitch-right:nth-child(9) { top: 88%; left: 65%; transform: rotate(5deg); }
+
+.baseball-shine {
+    position: absolute;
+    width: 30%;
+    height: 30%;
+    top: 15%;
+    left: 15%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+    opacity: 0;
+    animation: shine-appear 1s ease-out 1s forwards;
+}
+
+.baseball-rotation {
+    animation: rotate-baseball 2s linear infinite;
+}
+
+.baseball-glow {
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    top: -10%;
+    left: -10%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(200, 16, 46, 0.3) 0%, rgba(200, 16, 46, 0) 70%);
+    opacity: 0;
+    animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    font-size: 48px;
+    color: #c8102e;
+    text-shadow: 
+        0 0 20px rgba(200, 16, 46, 0.8),
+        0 0 40px rgba(200, 16, 46, 0.6),
+        0 0 60px rgba(200, 16, 46, 0.4);
+    letter-spacing: 4px;
+    opacity: 0;
+    animation: title-appear 1.5s ease-out 1.5s forwards;
+    z-index: 10;
+}
+
+.subtitle {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Arial', sans-serif;
+    font-size: 24px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+    letter-spacing: 2px;
+    opacity: 0;
+    animation: subtitle-appear 1.5s ease-out 2s forwards;
+    z-index: 10;
+}
+
+.background-glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(200, 16, 46, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+    opacity: 0;
+    animation: background-glow-appear 2s ease-out 1s forwards;
+}
+
+.field-lines {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0.1;
+}
+
+.field-line {
+    position: absolute;
+    background-color: #fff;
+    opacity: 0.1;
+}
+
+.field-line:nth-child(1) {
+    top: 20%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+}
+
+.field-line:nth-child(2) {
+    top: 40%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+}
+
+.field-line:nth-child(3) {
+    top: 60%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+}
+
+.field-line:nth-child(4) {
+    top: 80%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+}
+
+.field-line:nth-child(5) {
+    top: 0;
+    left: 20%;
+    width: 1px;
+    height: 100%;
+}
+
+.field-line:nth-child(6) {
+    top: 0;
+    left: 40%;
+    width: 1px;
+    height: 100%;
+}
+
+.field-line:nth-child(7) {
+    top: 0;
+    left: 60%;
+    width: 1px;
+    height: 100%;
+}
+
+.field-line:nth-child(8) {
+    top: 0;
+    left: 80%;
+    width: 1px;
+    height: 100%;
+}
+
+@keyframes zoom-in {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(15);
+    }
+}
+
+@keyframes rotate-baseball {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes shine-appear {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes glow-pulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes title-appear {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes subtitle-appear {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0);
+    }
+}
+
+@keyframes background-glow-appear {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}

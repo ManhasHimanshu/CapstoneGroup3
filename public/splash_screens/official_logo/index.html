@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baseball Splash Screen</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="background-glow"></div>
+        <div class="field-lines">
+            <div class="field-line"></div>
+            <div class="field-line"></div>
+            <div class="field-line"></div>
+            <div class="field-line"></div>
+            <div class="field-line"></div>
+            <div class="field-line"></div>
+            <div class="field-line"></div>
+            <div class="field-line"></div>
+        </div>
+        <div class="baseball">
+            <div class="baseball-glow"></div>
+            <div class="baseball-core">
+                <div class="baseball-shine"></div>
+                <div class="seam-container baseball-rotation">
+                    <!-- Left seam (top left to bottom left) -->
+                    <div class="seam">
+                        <div class="seam-left"></div>
+                        <div class="stitches-left">
+                            <div class="stitch-left"></div>
+                            <div class="stitch-left"></div>
+                            <div class="stitch-left"></div>
+                            <div class="stitch-left"></div>
+                            <div class="stitch-left"></div>
+                            <div class="stitch-left"></div>
+                            <div class="stitch-left"></div>
+                            <div class="stitch-left"></div>
+                            <div class="stitch-left"></div>
+                        </div>
+                    </div>
+                    <!-- Right seam (top right to bottom right) -->
+                    <div class="seam">
+                        <div class="seam-right"></div>
+                        <div class="stitches-right">
+                            <div class="stitch-right"></div>
+                            <div class="stitch-right"></div>
+                            <div class="stitch-right"></div>
+                            <div class="stitch-right"></div>
+                            <div class="stitch-right"></div>
+                            <div class="stitch-right"></div>
+                            <div class="stitch-right"></div>
+                            <div class="stitch-right"></div>
+                            <div class="stitch-right"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="title">PLAY BALL</div>
+        <div class="subtitle">Swing For The Fence!</div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // After the animation completes, redirect or show main content
+            setTimeout(() => {
+                // Here you would typically redirect to your main page
+                // window.location.href = "main.html";
+                console.log("Animation complete - would redirect to main content");
+            }, 4000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+/* ========================================================= */
+/* FULLSCREEN SPLASH SCREEN                                  */
+/* ========================================================= */
+
+.splashScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeOut 5s ease-in-out forwards;
+  animation-delay: 4s;
+}
+
+.splashContent {
+  width: 100%;
+  height: 100%;
+}
+
+.splashIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ========================================================= */
+/* HERO SECTION                                              */
+/* ========================================================= */
+
+.heroBanner {
+  position: relative;
+  z-index: 5; /* keeps hero ABOVE cinematic background */
+  height: clamp(260px, 44vh, 460px);
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  isolation: isolate;
+}
+
+.heroImg {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(1.02) contrast(1.04);
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.55)),
+    linear-gradient(90deg, rgba(225, 29, 42, 0.12), transparent 35% 65%, rgba(225, 29, 42, 0.12));
+  z-index: 6;
+}
+
+.heroInner {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 24px);
+  display: grid;
+  place-content: end;
+  gap: 10px;
+}
+
+.heroInner h1 {
+  margin: 0;
+  font-size: clamp(1.9rem, 1.2rem + 2.4vw, 3rem);
+  letter-spacing: 0.2px;
+  line-height: 1.1;
+  color: #fff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+}
+
+.sub {
+  margin: 0;
+  max-width: 760px;
+  color: #e9e9e9;
+}
+
+.ctaRow {
+  margin-top: 10px;
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ========================================================= */
+/* MAIN CONTENT WRAPPER                                      */
+/* ========================================================= */
+
+.wrap {
+  width: min(1100px, 92vw);
+  margin: 0 auto;
+  padding: clamp(18px, 3vw, 28px) 0 40px;
+}
+
+/* ========================================================= */
+/* FEATURE CARDS                                             */
+/* ========================================================= */
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(12px, 2vw, 18px);
+  margin: clamp(18px, 6vh, 56px) 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: clamp(14px, 2vw, 18px);
+  display: grid;
+  gap: 6px;
+  min-height: 148px;
+  transition:
+    transform 0.12s ease,
+    border-color 0.12s ease,
+    background 0.12s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
+.kicker {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.15;
+}
+
+.card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* ========================================================= */
+/* TESTIMONIALS                                              */
+/* ========================================================= */
+
+.testimonials {
+  margin-top: clamp(24px, 8vh, 72px);
+}
+
+.testimonials h2 {
+  text-align: center;
+  margin: 0 0 14px;
+  font-size: clamp(1.4rem, 1rem + 1.2vw, 1.8rem);
+  letter-spacing: 0.2px;
+}
+
+.tWrap {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(12px, 2vw, 16px);
+}
+
+.quoteCard {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: clamp(14px, 2vw, 18px);
+}
+
+.quoteCard::before {
+  content: '“';
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  font-size: 36px;
+  line-height: 1;
+  color: var(--primary);
+  opacity: 0.25;
+}
+
+.quote {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.cite {
+  display: grid;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.name {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.role {
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .features {
+    grid-template-columns: 1fr 1fr;
+  }
+  .tWrap {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .features {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================================= */
+/* CINEMATIC HOW IT WORKS SECTION                            */
+/* ========================================================= */
+
+.cineSection {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  padding: 140px 0;
+  background: #000;
+  color: #fff;
+}
+
+.cineBackdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background-size: cover;
+  background-position: center;
+
+  opacity: 0.45;
+
+  /* ⭐ GRAYSCALE ADDED HERE ⭐ */
+  filter: grayscale(100%) brightness(0.65) contrast(1.2);
+
+  pointer-events: none;
+}
+
+.cineHeading {
+  text-align: center;
+  font-size: clamp(1.8rem, 1.4rem + 1vw, 2.6rem);
+  font-weight: 700;
+  margin-bottom: 80px;
+  position: relative;
+  z-index: 2;
+}
+
+.cineStepsWrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 70px;
+}
+
+.cineStep {
+  opacity: 0;
+  transform: translateY(40px);
+  transition:
+    opacity 0.9s ease,
+    transform 0.9s ease;
+
+  backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 32px;
+
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stepReveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cineStep h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 10px;
+  font-weight: 600;
+  font-size: 1.35rem;
+}
+
+.cineStep h3 span {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #d72638;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.cineStep p {
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.45;
+}
