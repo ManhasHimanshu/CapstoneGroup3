@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from '../styles/Dashboard.module.css';
+import { convertSpeed, getSpeedUnit, formatSpeed } from '../utils/unitConversion.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
-export default function SwingPanel() {
+export default function SwingPanel({ measurementSystem = 'imperial' }) {
   const [latest, setLatest] = useState(null);
   const [recent, setRecent] = useState([]);
   const [liveStatus, setLiveStatus] = useState('polling'); // live | polling | offline
@@ -120,7 +121,8 @@ export default function SwingPanel() {
         ? styles.pillPoll
         : styles.pillOff;
 
-  const stats = computeStats(recent);
+  const stats = computeStats(recent, measurementSystem);
+  const speedUnit = getSpeedUnit(measurementSystem);
 
   return (
     <section className={styles.panel}>
@@ -153,7 +155,7 @@ export default function SwingPanel() {
         <div className={styles.cardHeaderRow}>
           <h3>Insights</h3>
           <div className={styles.actionsRow}>
-            <button className={styles.smallBtn} onClick={() => exportCSV(recent)}>
+            <button className={styles.smallBtn} onClick={() => exportCSV(recent, measurementSystem)}>
               Export CSV
             </button>
             <button className={styles.smallBtn} onClick={() => copyLatestJSON(latest)}>
@@ -167,19 +169,22 @@ export default function SwingPanel() {
             <strong>{stats.count}</strong>
           </div>
           <div className={styles.insight}>
-            <span className={styles.kicker}>Best Peak ω</span>
-            <strong>{toFixed(stats.bestPeak, 3)} rad/s</strong>
+            <span className={styles.kicker}>Best Speed</span>
+            <strong>{formatSpeed(stats.bestSpeed, measurementSystem)}</strong>
           </div>
           <div className={styles.insight}>
-            <span className={styles.kicker}>Avg Peak ω</span>
-            <strong>{toFixed(stats.avgPeak, 3)} rad/s</strong>
+            <span className={styles.kicker}>Avg Speed</span>
+            <strong>{formatSpeed(stats.avgSpeed, measurementSystem)}</strong>
           </div>
           <div className={styles.insight}>
             <span className={styles.kicker}>Avg Duration</span>
             <strong>{toFixed(stats.avgDur, 0)} ms</strong>
           </div>
         </div>
-        <MiniChart data={recent.map((s) => s.peak_omega_rad_s).slice(0, 20)} />
+        <MiniChart 
+          data={recent.map((s) => convertSpeed(radsToMph(s.peak_omega_rad_s), measurementSystem)).slice(0, 20)} 
+          unit={speedUnit}
+        />
       </div>
 
       {/* Recent table */}
@@ -192,7 +197,7 @@ export default function SwingPanel() {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Peak ω (rad/s)</th>
+                <th>Speed ({speedUnit})</th>
                 <th>Duration (ms)</th>
                 <th>t→Peak (ms)</th>
                 <th>Start (ms)</th>
@@ -211,7 +216,7 @@ export default function SwingPanel() {
               {recent.map((s, i) => (
                 <tr key={s.id || i}>
                   <td>{recent.length - i}</td>
-                  <td>{toFixed(s.peak_omega_rad_s, 3)}</td>
+                  <td>{formatSpeed(radsToMph(s.peak_omega_rad_s), measurementSystem)}</td>
                   <td>{s.duration_ms}</td>
                   <td>{s.t_to_peak_ms}</td>
                   <td>{s.t_start_ms}</td>
@@ -241,31 +246,43 @@ function Metric({ label, value, suffix }) {
   );
 }
 
-function computeStats(rows) {
+// Convert rad/s to mph (assuming ~60cm radius like SwingSerialPanel)
+const MPH_PER_MS = 2.23694;
+const radsToMph = (omegaRad, radiusCm = 60) =>
+  typeof omegaRad === 'number' ? omegaRad * (radiusCm / 100) * MPH_PER_MS : null;
+
+function computeStats(rows, measurementSystem) {
   const count = rows.length;
-  if (!count) return { count: 0, bestPeak: 0, avgPeak: 0, avgDur: 0 };
-  let bestPeak = -Infinity;
-  let sumPeak = 0;
+  if (!count) return { count: 0, bestSpeed: 0, avgSpeed: 0, avgDur: 0 };
+  
+  let bestSpeed = -Infinity;
+  let sumSpeed = 0;
   let sumDur = 0;
+  
   for (const r of rows) {
-    const p = Number(r.peak_omega_rad_s) || 0;
+    const mph = radsToMph(Number(r.peak_omega_rad_s) || 0);
+    const speed = convertSpeed(mph, measurementSystem);
     const d = Number(r.duration_ms) || 0;
-    if (p > bestPeak) bestPeak = p;
-    sumPeak += p;
+    
+    if (speed > bestSpeed) bestSpeed = speed;
+    sumSpeed += speed;
     sumDur += d;
   }
+  
   return {
     count,
-    bestPeak,
-    avgPeak: sumPeak / count,
+    bestSpeed,
+    avgSpeed: sumSpeed / count,
     avgDur: sumDur / count,
   };
 }
 
-function exportCSV(rows) {
+function exportCSV(rows, measurementSystem) {
   if (!rows?.length) return;
+  const speedUnit = getSpeedUnit(measurementSystem);
   const header = [
     'id',
+    `speed_${speedUnit}`,
     'peak_omega_rad_s',
     'duration_ms',
     't_to_peak_ms',
@@ -274,7 +291,20 @@ function exportCSV(rows) {
     'receivedAt',
   ];
   const lines = [header.join(',')].concat(
-    rows.map((r) => header.map((k) => (r[k] ?? '')).toString())
+    rows.map((r) => {
+      const mph = radsToMph(r.peak_omega_rad_s);
+      const speed = convertSpeed(mph, measurementSystem);
+      return [
+        r.id || '',
+        speed?.toFixed(3) ?? '',
+        r.peak_omega_rad_s ?? '',
+        r.duration_ms ?? '',
+        r.t_to_peak_ms ?? '',
+        r.t_start_ms ?? '',
+        r.t_end_ms ?? '',
+        r.receivedAt ?? '',
+      ].join(',');
+    })
   );
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -290,7 +320,7 @@ function copyLatestJSON(obj) {
   navigator.clipboard?.writeText(JSON.stringify(obj, null, 2));
 }
 
-function MiniChart({ data }) {
+function MiniChart({ data, unit }) {
   const w = 600;
   const h = 120;
   const pad = 8;
@@ -312,8 +342,8 @@ function MiniChart({ data }) {
         <line x1={pad} y1={h - pad} x2={w - pad} y2={h - pad} className={styles.chartAxis} />
       </svg>
       <div className={styles.chartLegend}>
-        <span>min {toFixed(min, 3)}</span>
-        <span>max {toFixed(max, 3)}</span>
+        <span>min {toFixed(min, 1)} {unit}</span>
+        <span>max {toFixed(max, 1)} {unit}</span>
       </div>
     </div>
   );

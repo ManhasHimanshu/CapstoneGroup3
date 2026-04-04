@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from '../styles/Dashboard.module.css';
 import Orientation3D from './Orientation3D.jsx';
+import { convertSpeed, getSpeedUnit, formatSpeed } from '../utils/unitConversion.js';
 
 const MPH_PER_MS = 2.23694; // m/s -> mph
 const toMph = (omegaRad, radiusCm) =>
   typeof omegaRad === 'number' ? omegaRad * (radiusCm / 100) * MPH_PER_MS : null;
 
-export default function SwingSerialPanel() {
+export default function SwingSerialPanel({ measurementSystem = 'imperial' }) {
   const [supported, setSupported] = useState(false);
   const [connected, setConnected] = useState(false);
   const [latest, setLatest] = useState(null);
@@ -151,8 +152,9 @@ export default function SwingSerialPanel() {
   }
 
   // ---- Stats ----
-  const stats = computeStats(recent, radiusCm);
+  const stats = computeStats(recent, radiusCm, measurementSystem);
   const mphLatest = toMph(latest?.peak_omega_rad_s, radiusCm);
+  const speedUnit = getSpeedUnit(measurementSystem);
 
   return (
     <section className={styles.panel}>
@@ -182,7 +184,7 @@ export default function SwingSerialPanel() {
         </div>
       </div>
 
-      {/* >>> New split layout: Orientation (left) + Settings & Metrics (right) */}
+      {/* New split layout: Orientation (left) + Settings & Metrics (right) */}
       <div className={styles.rowSplit}>
         {/* Left: 3D orientation */}
         <div className={styles.card}>
@@ -213,7 +215,7 @@ export default function SwingSerialPanel() {
                 />
               </label>
               <div className={styles.helpText}>
-                We convert ω→mph using v = ω · r. Default is 60 cm near the barrel.
+                We convert ω→{speedUnit} using v = ω · r. Default is 60 cm near the barrel.
               </div>
             </div>
           </div>
@@ -224,7 +226,7 @@ export default function SwingSerialPanel() {
             </div>
             <div className={styles.bigMetricLabel}>Est. Barrel Speed</div>
             <div className={styles.bigMetric}>
-              {mphLatest != null ? `${toFixed(mphLatest, 1)} mph` : '—'}
+              {formatSpeed(mphLatest, measurementSystem)}
             </div>
             <div className={styles.metricsGrid} style={{ marginTop: 10 }}>
               <Metric label="Duration" value={latest?.duration_ms} suffix="ms" />
@@ -248,7 +250,7 @@ export default function SwingSerialPanel() {
         <div className={styles.cardHeaderRow}>
           <h3>Insights</h3>
           <div className={styles.actionsRow}>
-            <button className={styles.smallBtn} onClick={() => exportCSV(recent, radiusCm)}>
+            <button className={styles.smallBtn} onClick={() => exportCSV(recent, radiusCm, measurementSystem)}>
               Export CSV
             </button>
             <button className={styles.smallBtn} onClick={() => copyLatestJSON(latest)}>
@@ -263,11 +265,11 @@ export default function SwingSerialPanel() {
           </div>
           <div className={styles.insight}>
             <span className={styles.kicker}>Best Speed</span>
-            <strong>{toFixed(stats.bestMph, 1)} mph</strong>
+            <strong>{formatSpeed(stats.bestSpeed, measurementSystem)}</strong>
           </div>
           <div className={styles.insight}>
             <span className={styles.kicker}>Avg Speed</span>
-            <strong>{toFixed(stats.avgMph, 1)} mph</strong>
+            <strong>{formatSpeed(stats.avgSpeed, measurementSystem)}</strong>
           </div>
           <div className={styles.insight}>
             <span className={styles.kicker}>Avg Duration</span>
@@ -275,8 +277,8 @@ export default function SwingSerialPanel() {
           </div>
         </div>
         <MiniChart
-          data={recent.map((s) => toMph(s.peak_omega_rad_s, radiusCm)).slice(0, 20)}
-          unit="mph"
+          data={recent.map((s) => convertSpeed(toMph(s.peak_omega_rad_s, radiusCm), measurementSystem)).slice(0, 20)}
+          unit={speedUnit}
         />
       </div>
 
@@ -290,7 +292,7 @@ export default function SwingSerialPanel() {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Speed (mph)</th>
+                <th>Speed ({speedUnit})</th>
                 <th>Duration (ms)</th>
                 <th>t→Peak (ms)</th>
                 <th>Start (ms)</th>
@@ -309,7 +311,7 @@ export default function SwingSerialPanel() {
               {recent.map((s, i) => (
                 <tr key={s.id || i}>
                   <td>{recent.length - i}</td>
-                  <td>{toFixed(toMph(s.peak_omega_rad_s, radiusCm), 1)}</td>
+                  <td>{formatSpeed(toMph(s.peak_omega_rad_s, radiusCm), measurementSystem)}</td>
                   <td>{s.duration_ms}</td>
                   <td>{s.t_to_peak_ms}</td>
                   <td>{s.t_start_ms}</td>
@@ -339,26 +341,38 @@ function Metric({ label, value, suffix }) {
   );
 }
 
-function computeStats(rows, radiusCm) {
+function computeStats(rows, radiusCm, measurementSystem) {
   const count = rows.length;
-  if (!count) return { count: 0, bestMph: 0, avgMph: 0, avgDur: 0 };
-  let bestMph = -Infinity,
-    sumMph = 0,
-    sumDur = 0;
+  if (!count) return { count: 0, bestSpeed: 0, avgSpeed: 0, avgDur: 0 };
+  
+  let bestSpeed = -Infinity;
+  let sumSpeed = 0;
+  let sumDur = 0;
+  
   for (const r of rows) {
     const mph = toMph(Number(r.peak_omega_rad_s) || 0, radiusCm);
+    const speed = convertSpeed(mph, measurementSystem);
     const d = Number(r.duration_ms) || 0;
-    if (mph > bestMph) bestMph = mph;
-    sumMph += mph;
+    
+    if (speed > bestSpeed) bestSpeed = speed;
+    sumSpeed += speed;
     sumDur += d;
   }
-  return { count, bestMph, avgMph: sumMph / count, avgDur: sumDur / count };
+  
+  return { 
+    count, 
+    bestSpeed, 
+    avgSpeed: sumSpeed / count, 
+    avgDur: sumDur / count 
+  };
 }
 
-function exportCSV(rows, radiusCm) {
+function exportCSV(rows, radiusCm, measurementSystem) {
   if (!rows?.length) return;
+  const speedUnit = getSpeedUnit(measurementSystem);
   const header = [
     'id',
+    `speed_${speedUnit}`,
     'speed_mph',
     'peak_omega_rad_s',
     'duration_ms',
@@ -368,18 +382,21 @@ function exportCSV(rows, radiusCm) {
     'receivedAt',
   ];
   const lines = [header.join(',')].concat(
-    rows.map((r) =>
-      [
+    rows.map((r) => {
+      const mph = toMph(r.peak_omega_rad_s, radiusCm);
+      const speed = convertSpeed(mph, measurementSystem);
+      return [
         r.id || '',
-        toMph(r.peak_omega_rad_s, radiusCm)?.toFixed(3) ?? '',
+        speed?.toFixed(3) ?? '',
+        mph?.toFixed(3) ?? '',
         r.peak_omega_rad_s ?? '',
         r.duration_ms ?? '',
         r.t_to_peak_ms ?? '',
         r.t_start_ms ?? '',
         r.t_end_ms ?? '',
         r.receivedAt ?? '',
-      ].join(',')
-    )
+      ].join(',');
+    })
   );
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);

@@ -336,3 +336,22 @@
     grid-template-columns: 1fr;
   }
 }
+
+.videoSection {
+  margin-top: 24px;
+}
+
+.videoCard {
+  background: #111;
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.videoPlayer {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 10px;
+}

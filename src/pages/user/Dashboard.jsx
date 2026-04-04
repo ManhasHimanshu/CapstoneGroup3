@@ -6,16 +6,64 @@ import SwingPanel from '../../components/SwingPanel.jsx';
 
 export default function Dashboard() {
   const [tab, setTab] = useState(() => localStorage.getItem('dashTab') || 'usb');
+  const [measurementSystem, setMeasurementSystem] = useState('imperial');
+  const [latestVideo, setLatestVideo] = useState(null);
+
+  // Load settings on component mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('dashboardSettings');
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      setMeasurementSystem(settings.measurementSystem || 'imperial');
+    }
+  }, []);
+
+  // Listen for real-time settings changes
+  useEffect(() => {
+    const handleSettingsChange = (event) => {
+      const newSettings = event.detail;
+      setMeasurementSystem(newSettings.measurementSystem || 'imperial');
+    };
+
+    window.addEventListener('settingsChanged', handleSettingsChange);
+    
+    return () => {
+      window.removeEventListener('settingsChanged', handleSettingsChange);
+    };
+  }, []);
+
+  // Save tab to localStorage
   useEffect(() => {
     localStorage.setItem('dashTab', tab);
   }, [tab]);
+
+  // Fetch latest video from backend
+  useEffect(() => {
+    const fetchLatestVideo = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/latest-video');
+        const data = await res.json();
+        setLatestVideo(data.videoUrl);
+      } catch (err) {
+        console.error('Error fetching latest video:', err);
+      }
+    };
+
+    fetchLatestVideo();
+
+    // Refresh every 5 seconds
+    const interval = setInterval(fetchLatestVideo, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className={styles.proThemeDark}>
       <div className={styles.dashWrap}>
         {/* ===== HEADER / TABS ===== */}
         <header className={styles.panelHeader} style={{ marginBottom: 8 }}>
-          <h1 style={{ margin: 0, fontSize: 'clamp(1.2rem, 0.9rem + 1vw, 1.6rem)' }}>Dashboard</h1>
+          <h1 style={{ margin: 0, fontSize: 'clamp(1.2rem, 0.9rem + 1vw, 1.6rem)' }}>
+            Dashboard
+          </h1>
           <div className={styles.actionsRow}>
             <button
               className={styles.tabBtn}
@@ -37,7 +85,32 @@ export default function Dashboard() {
         </header>
 
         {/* ===== LIVE PANELS ===== */}
-        {tab === 'usb' ? <SwingSerialPanel /> : <SwingPanel />}
+        {tab === 'usb' 
+          ? <SwingSerialPanel measurementSystem={measurementSystem} /> 
+          : <SwingPanel measurementSystem={measurementSystem} />
+        }
+
+        {/* ===== LATEST VIDEO SECTION ===== */}
+        <section className={styles.videoSection}>
+          <h2 className={styles.howTitle}>Latest Swing Recording</h2>
+
+          <div className={styles.videoCard}>
+            {latestVideo ? (
+              <video
+                key={latestVideo}
+                controls
+                autoPlay
+                muted
+                className={styles.videoPlayer}
+              >
+                <source src={latestVideo} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <p style={{ color: 'white' }}>No video available yet. Take a swing to record one!</p>
+            )}
+          </div>
+        </section>
 
         {/* ===== HOW IT WORKS SECTION ===== */}
         <section className={styles.howItWorksSection}>
