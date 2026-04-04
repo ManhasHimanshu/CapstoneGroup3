@@ -10,7 +10,7 @@ from collections import defaultdict, deque
 
 #============ Setup ============#
 
-MODEL_PATH = r"C:\Github\CapstoneGroup3\Ball_TrackingAI\Final\model\Android_Hernandez.pt"
+MODEL_PATH = r"C:\Users\manha\Documents\GitHub\CapstoneGroup3\Ball_TrackingAI\Final\model\Android_Hernandez.pt"
 WIDTH        = 1280
 HEIGHT       = 720
 MAX_GAP      = 4
@@ -79,12 +79,14 @@ def main():
     model   = YOLO(MODEL_PATH)
     tracker = Sort(max_age=MAX_GAP, min_hits=MIN_DETECT, iou_threshold=0)
 
-    save_dir = r"C:\Github\CapstoneGroup3\Ball_TrackingAI\Final\videos"
+    save_dir = r"C:\Users\manha\Desktop\School\Winter 2026\CEG 4913"
     os.makedirs(save_dir, exist_ok=True)
     filename = os.path.join(save_dir, f"session_{time.strftime('%Y%m%d_%H%M%S')}.mp4")
     print(f"[INFO] Saving to: {filename}")
 
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    #cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    CAMERA_INDEX = 1   # try 1 first, then 2 if needed
+    cap = cv2.VideoCapture(CAMERA_INDEX, cv2.CAP_DSHOW)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH,  WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
 
